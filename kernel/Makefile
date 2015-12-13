@@ -66,6 +66,7 @@ OBJS-y+= \
 	timer.o				\
 	term.o				\
 	bflt.o				\
+	hardfault_debug.o	\
 	pipe.o
 
 OBJS-y += vfs.o

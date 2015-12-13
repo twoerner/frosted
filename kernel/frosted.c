@@ -24,6 +24,8 @@
 
 #define IDLE() while(1){do{}while(0);}
 
+uint32_t r9_got = NULL;
+
 /* The following needs to be defined by
  * the application code
  */
@@ -31,7 +33,7 @@ void (*init)(void *arg) = (void (*)(void*))(FLASH_ORIGIN + APPS_ORIGIN);
 uint8_t * flt_file = (void (*)(void*))(FLASH_ORIGIN + APPS_ORIGIN);
 
 static int (*_klog_write)(int, const void *, unsigned int) = NULL;
-    
+extern void HardFault_HandlerC(unsigned long *hardfault_args);
 
 void klog_set_write(int (*wr)(int, const void *, unsigned int))
 {
@@ -46,6 +48,7 @@ int klog_write(int file, char *ptr, int len)
     return len;
 }
 
+__attribute__((naked))
 void hard_fault_handler(void)
 {
     /*
@@ -54,7 +57,18 @@ void hard_fault_handler(void)
     volatile uint32_t bfar = GET_REG(SYSREG_BFAR);
     volatile uint32_t afsr = GET_REG(SYSREG_AFSR);
     */
-    while(1);
+    
+    /*
+     * Get the appropriate stack pointer, depending on our mode,
+     * and use it as the parameter to the C handler. This function
+     * will never return
+     */
+    __asm("TST LR, #4           \n"
+          "ITE EQ               \n"
+          "MRSEQ R0, MSP        \n"
+          "MRSNE R0, PSP        \n"
+          "B HardFault_HandlerC \n"
+           );
 }
 
 void mem_manage_handler(void)
@@ -67,9 +81,20 @@ void bus_fault_handler(void)
     while(1);
 }
 
+__attribute__((naked))
 void usage_fault_handler(void)
 {
-    while(1);
+    /*
+     * Get the appropriate stack pointer, depending on our mode,
+     * and use it as the parameter to the C handler. This function
+     * will never return
+     */
+    __asm("TST LR, #4           \n"
+          "ITE EQ               \n"
+          "MRSEQ R0, MSP        \n"
+          "MRSNE R0, PSP        \n"
+          "B HardFault_HandlerC \n"
+           );
 }
 
 void machine_init(struct fnode * dev);
@@ -126,15 +151,15 @@ static void ktimer_test(uint32_t time, void *arg)
 
 void frosted_kernel(void)
 {
-    if (0)
+    if (1)
     {
         /* Load init from BFLT */
         void * memptr;
         size_t mem_size;
         size_t stack_size;
         uint32_t got_loc;
-        bflt_load(flt_file, &memptr, &mem_size, &init, &stack_size, &got_loc);
-        if (task_create_GOT(init, (void *)0, 2, got_loc) < 0)
+        bflt_load(flt_file, &memptr, &mem_size, &init, &stack_size, &r9_got);
+        if (task_create_GOT(init, (void *)0, 2, r9_got) < 0)
             IDLE();
     } else {
         /* Create "init" task */

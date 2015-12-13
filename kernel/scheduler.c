@@ -34,6 +34,8 @@
 
 #define STACK_THRESHOLD 64
 
+extern uint32_t r9_got;
+
 
 /* Array of syscalls */
 static void *sys_syscall_handlers[_SYSCALLS_NR] = {
@@ -770,7 +772,7 @@ int task_create(void (*init)(void *), void *arg, unsigned int prio)
     tasklist_add(&tasks_running, new);
 
     number_of_tasks++;
-    task_create_real(new, init, arg, prio, 0);
+    task_create_real(new, init, arg, prio, r9_got);
     new->tb.state = TASK_RUNNABLE;
     irq_on();
     return new->tb.pid;
@@ -1141,7 +1143,7 @@ static uint32_t *a4 = NULL;
 static uint32_t *a5 = NULL;
 int __attribute__((naked)) sv_call_handler(uint32_t n, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {
-    /* save current context on current stack */
+    /* save current context on current stack -> already done in svc.s, but for compatability of switching between tasks, do it again */
     save_task_context();
     asm volatile ("mrs %0, "PSP"" : "=r" (_top_stack));
 

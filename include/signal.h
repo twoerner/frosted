@@ -23,8 +23,9 @@
 #define SIGCHLD     17
 #define SIGCONT     18
 #define SIGSTOP     19
+#define	SIGTTIN	    20	/* STUB */
 
-#define SIGMAX      20
+#define SIGMAX      21
 
 typedef uint32_t sigset_t;
 #define SI_USER    1    /* Sent by a user. kill(), abort(), etc */
@@ -35,6 +36,10 @@ typedef uint32_t sigset_t;
 
 #define SIG_DFL ((void (*)(int)) 0)
 #define SIG_IGN ((void (*)(int)) 0xFFFFFFFF)
+/* STUBS */
+typedef void (*_sig_func_ptr)(int);
+#define SIG_ERR ((_sig_func_ptr)-1)	/* Error return */
+/* /STUBS */
 
 union sigval {
   int    sival_int;    /* Integer signal value */
