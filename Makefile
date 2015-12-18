@@ -159,6 +159,7 @@ menuconfig:
 
 libclean:
 	@make -C kernel/libopencm3 clean
+	@make -C kernel/picotcp clean
 
 clean:
 	rm -f  kernel/$(BOARD)/$(BOARD).ld
