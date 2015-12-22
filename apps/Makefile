@@ -31,7 +31,8 @@ LDFLAGS+=-fPIC -mword-relocations -mlong-calls -fno-common -Wl,-elf2flt
 all: apps.bflt
 
 apps.bflt: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
-	$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted $(FROSTED_PATH)/newlib/lib/libc.a $(FROSTED_PATH)/newlib/lib/libg.a -lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
+	#$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted $(FROSTED_PATH)/newlib/lib/libc.a $(FROSTED_PATH)/newlib/lib/libg.a -lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
+	$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted -lc -lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 
 clean:
 	@rm -f *.o
