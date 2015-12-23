@@ -4,3 +4,9 @@
 [submodule "apps/busybox"]
 	path = apps/busybox
 	url = git@github.com:insane-adding-machines/busybox.git
+[submodule "elf2flt"]
+	path = elf2flt
+	url = git@github.com:insane-adding-machines/elf2flt.git
+[submodule "newlib"]
+	path = newlib
+	url = git@github.com:insane-adding-machines/newlib.git
