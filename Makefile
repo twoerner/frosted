@@ -84,7 +84,7 @@ SHELL=/bin/bash
 APPS_START = 0x20000
 PADTO = $$(($(FLASH_ORIGIN)+$(APPS_START)))
 
-all: image.bin
+all: kconfig/.config image.bin
 
 image.bin: image_bflt
 	cp $< $@
@@ -172,7 +172,7 @@ menuconfig:
 libclean:
 	@make -C kernel/libopencm3 clean
 
-clean:
+clean: kconfig/.config
 	rm -f  kernel/$(BOARD)/$(BOARD).ld
 	@make -C kernel clean
 	@make -C libfrosted clean
@@ -182,4 +182,8 @@ clean:
 	@rm -f apps/apps.ld
 	@rm -f kernel/$(BOARD)/$(BOARD).ld
 	@find . |grep "\.o" | xargs -x rm -f
+
+kconfig/.config:
+	@echo Please run \'make menuconfig\' or create a .config file
+	@false
 

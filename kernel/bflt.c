@@ -210,12 +210,15 @@ int process_relocs(struct flat_hdr * hdr, unsigned long * base, unsigned long da
  * +------------------------+   bss_end
  */
 
-int bflt_load(uint8_t* from, void **mem_ptr, size_t *mem_size, int (**entry_point)(int,char*[]), size_t *stack_size, uint32_t *got_loc) {
+int bflt_load(uint8_t* from, void **reloc_text, void **reloc_data, void **reloc_bss,
+              int (**entry_point)(int,char*[]), size_t *stack_size, uint32_t *got_loc)
+{
     struct flat_hdr hdr;
     void * mem = NULL;
 	uint32_t text_len, data_len, bss_len, stack_len, flags, alloc_len, start_of_file;
 	uint32_t full_data;
-    uint8_t *data_src_start, *data_dest_start, *relocs_src_start, *address_zero = from;
+    uint8_t *data_src_start, *data_dest_start, *relocs_src_start, *text_src_start;
+    uint8_t *address_zero = from;
     int relocs;
     int rev;
 
@@ -243,7 +246,7 @@ int bflt_load(uint8_t* from, void **mem_ptr, size_t *mem_size, int (**entry_poin
 	rev                 = long_be(hdr.rev);
 	full_data           = data_len + relocs * sizeof(unsigned long);
     /* Calculate source addresses */
-    //text_src_start      = address_zero + sizeof(struct flat_hdr);   // UNUSED?
+    text_src_start      = address_zero + sizeof(struct flat_hdr);
     data_src_start      = address_zero + long_be(hdr.data_start);
     relocs_src_start    = address_zero + long_be(hdr.reloc_start);
     *entry_point        = address_zero + (long_be(hdr.entry) & 0xFFFFFFFE); /* entrypoint - reset THUMB bit */
@@ -279,7 +282,9 @@ int bflt_load(uint8_t* from, void **mem_ptr, size_t *mem_size, int (**entry_poin
             klog(LOG_ERR, "Could not allocate enough memory for process");
             goto error;
         }
-        *mem_ptr = data_dest_start;
+        *reloc_text = text_src_start; /* for now, we never relocate .text */
+        *reloc_data = data_dest_start;
+        *reloc_bss = data_dest_start + data_len;
 
         /* copy segments .data and .bss */
         memcpy(data_dest_start, data_src_start, data_len);    /* init .data */
@@ -319,9 +324,10 @@ int bflt_load(uint8_t* from, void **mem_ptr, size_t *mem_size, int (**entry_poin
 
 error:
     if (mem) kfree(mem);
-    *mem_ptr = NULL;
+    *reloc_text  = NULL;
+    *reloc_data  = NULL;
+    *reloc_bss   = NULL;
     *entry_point = NULL;
-    *mem_size = 0;
     klog(LOG_ERR, "Caught error - exiting");
 }
 

@@ -129,11 +129,11 @@ void frosted_kernel(void)
     if (1)
     {
         /* Load init from BFLT */
-        void * memptr;
-        size_t mem_size;
+        void *reloc_text, *reloc_data, *reloc_bss;
         size_t stack_size;
         uint32_t got_loc;
-        bflt_load(flt_file, &memptr, &mem_size, &init, &stack_size, &got_loc);
+        bflt_load(flt_file, &reloc_text, &reloc_data, &reloc_bss, &init, &stack_size, &got_loc);
+
         if (task_create_GOT(init, (void *)0, 2, got_loc) < 0)
             IDLE();
     } else {
