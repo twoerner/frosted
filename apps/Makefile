@@ -25,14 +25,16 @@ CFLAGS+=-fPIC -mword-relocations -mlong-calls -fno-common -msingle-pic-base -mpi
 CFLAGS+=-ggdb
 
 # LINKER FLAGS
-LDFLAGS:=-L$(FROSTED_PATH)/build/lib -L$(FROSTED_PATH)/newlib/lib -gc-sections --specs=nano.specs
+LDFLAGS:=-L$(FROSTED_PATH)/build/lib -L$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib -gc-sections --specs=nano.specs
 LDFLAGS+=-fPIC -mword-relocations -mlong-calls -fno-common -Wl,-elf2flt
 
 all: apps.bflt
 
 apps.bflt: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
-	#$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted $(FROSTED_PATH)/newlib/lib/libc.a $(FROSTED_PATH)/newlib/lib/libg.a -lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
-	$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted -lc -lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
+	$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted \
+		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libc.a \
+		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libg.a \
+		-lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 
 clean:
 	@rm -f *.o
