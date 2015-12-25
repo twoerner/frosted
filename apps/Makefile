@@ -21,7 +21,7 @@ CFLAGS+=-I$(FROSTED_PATH)/include -I$(FROSTED_PATH)/include/libc -I$(FROSTED_PAT
 CFLAGS+=-mthumb -mlittle-endian -mthumb-interwork -ffunction-sections -mcpu=cortex-m3
 CFLAGS+=-DCORE_M3 -D__frosted__
 # COMPILER FLAGS -- No gcc libraries
-CFLAGS+=-nostartfiles -fno-builtin -ffreestanding
+#CFLAGS+=-nostartfiles -fno-builtin -ffreestanding
 # COMPILER FLAGS -- GOT/PIC
 CFLAGS+=-fPIC -mlong-calls -fno-common -msingle-pic-base -mno-pic-data-is-text-relative
 # Debugging
@@ -31,9 +31,9 @@ CFLAGS+=-ggdb
 LDFLAGS:=-L$(FROSTED_PATH)/build/lib -L$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib -gc-sections --specs=nano.specs
 LDFLAGS+=-fPIC -mlong-calls -fno-common -Wl,-elf2flt
 
-all: apps.bflt
+all: apps
 
-apps.bflt: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
+apps: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
 	$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libc.a \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libg.a \
@@ -42,4 +42,5 @@ apps.bflt: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
 
 clean:
 	@rm -f *.o
-	@rm -f apps.bflt
+	@rm -f apps
+	@rm -f apps.gdb

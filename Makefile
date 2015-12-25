@@ -105,7 +105,7 @@ $(PREFIX)/lib/libkernel.a: FORCE
 $(PREFIX)/lib/libfrosted.a: FORCE
 	make -C libfrosted
 
-apps/apps.bflt: $(PREFIX)/lib/libfrosted.a
+apps/apps: $(PREFIX)/lib/libfrosted.a
 	make -C apps
 
 image_bin: kernel.elf apps.elf
@@ -114,10 +114,10 @@ image_bin: kernel.elf apps.elf
 	$(CROSS_COMPILE)objcopy -O binary --pad-to=0x40000 apps.elf apps.bin
 	cat apps.bin >> $@
 
-image_bflt: kernel.elf apps/apps.bflt
+image_bflt: kernel.elf apps/apps
 	export PADTO=`python2 -c "print ( $(KFLASHMEM_SIZE) * 1024) + int('$(FLASH_ORIGIN)', 16)"`;	\
 	$(CROSS_COMPILE)objcopy -O binary --pad-to=$$PADTO kernel.elf $@
-	cat apps/apps.bflt >> $@
+	cat apps/apps >> $@
 
 apps/apps.ld: apps/apps.ld.in
 	export KMEM_SIZE_B=`python2 -c "print '0x%X' % ( $(KFLASHMEM_SIZE) * 1024)"`;	\
