@@ -119,6 +119,7 @@ OBJS-y+=						\
 		posix/execv.o			\
 		posix/execve.o			\
 		posix/execvp.o			\
+		posix/fnmatch.o			\
 		posix/glob.o			\
 
 
