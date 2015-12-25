@@ -21,7 +21,7 @@ CFLAGS+=-I$(FROSTED_PATH)/include -I$(FROSTED_PATH)/include/libc -I$(FROSTED_PAT
 CFLAGS+=-mthumb -mlittle-endian -mthumb-interwork -ffunction-sections -mcpu=cortex-m3
 CFLAGS+=-DCORE_M3 -D__frosted__
 # COMPILER FLAGS -- No gcc libraries
-#CFLAGS+=-nostartfiles -fno-builtin -ffreestanding
+CFLAGS+=-nostartfiles -fno-builtin -ffreestanding
 # COMPILER FLAGS -- GOT/PIC
 CFLAGS+=-fPIC -mlong-calls -fno-common -msingle-pic-base -mno-pic-data-is-text-relative
 # Debugging
