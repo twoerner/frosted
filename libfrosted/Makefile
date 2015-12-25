@@ -19,18 +19,18 @@ AS:=$(CROSS_COMPILE)as
 AR:=$(CROSS_COMPILE)ar
 LIBNAME:=libfrosted.a
 PREFIX:=$(PWD)/build
-#Target flags
+# Target flags
 CFLAGS+=-mcpu=cortex-m3 -mthumb -mlittle-endian -mthumb-interwork -fno-common
 CFLAGS+=-DCORE_M3 -DARCH_$(ARCH)
 CFLAGS+=-DKLOG_LEVEL=6
-#Include paths
+# Include paths
 CFLAGS+=-I. -I../include -I../newlib/include
-#Freestanding options
+# Freestanding options
 CFLAGS+=-fno-builtin
 CFLAGS+=-ffreestanding
 # GOTPIC CFLAGS
-CFLAGS+=-fPIC -mword-relocations -mlong-calls -fno-common -msingle-pic-base -mpic-register=r9 -mno-pic-data-is-text-relative
-#Debugging
+CFLAGS+=-fPIC -mlong-calls -fno-common -msingle-pic-base -mno-pic-data-is-text-relative
+# Debugging
 CFLAGS+=-ggdb
 ASFLAGS:=-mcpu=cortex-m3 -mthumb -mlittle-endian -mthumb-interwork -ggdb
 

@@ -15,18 +15,21 @@ CC:=$(CROSS_COMPILE)gcc
 AS:=$(CROSS_COMPILE)as
 AR:=$(CROSS_COMPILE)ar
 
-# COMPILER FLAGS
-CFLAGS+=-I$(FROSTED_PATH)/kernel/libopencm3/include -I$(FROSTED_PATH)/kernel -I$(FROSTED_PATH)/include -I$(FROSTED_PATH)/include/libc -I$(FROSTED_PATH)/newlib/include
-CFLAGS+=-mthumb -mlittle-endian -mthumb-interwork -fno-builtin -ffunction-sections -mcpu=cortex-m3 -nostartfiles
-CFLAGS+=-DCORE_M3 -DKLOG_LEVEL=6 -D__frosted__
-# GOTPIC CFLAGS
-CFLAGS+=-fPIC -mword-relocations -mlong-calls -fno-common -msingle-pic-base -mpic-register=r9 -mno-pic-data-is-text-relative
+# COMPILER FLAGS -- Includes
+CFLAGS+=-I$(FROSTED_PATH)/include -I$(FROSTED_PATH)/include/libc -I$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/include
+# COMPILER FLAGS -- Target CPU
+CFLAGS+=-mthumb -mlittle-endian -mthumb-interwork -ffunction-sections -mcpu=cortex-m3
+CFLAGS+=-DCORE_M3 -D__frosted__
+# COMPILER FLAGS -- No gcc libraries
+CFLAGS+=-nostartfiles -fno-builtin -ffreestanding
+# COMPILER FLAGS -- GOT/PIC
+CFLAGS+=-fPIC -mlong-calls -fno-common -msingle-pic-base -mno-pic-data-is-text-relative
 # Debugging
 CFLAGS+=-ggdb
 
 # LINKER FLAGS
 LDFLAGS:=-L$(FROSTED_PATH)/build/lib -L$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib -gc-sections --specs=nano.specs
-LDFLAGS+=-fPIC -mword-relocations -mlong-calls -fno-common -Wl,-elf2flt
+LDFLAGS+=-fPIC -mlong-calls -fno-common -Wl,-elf2flt
 
 all: apps.bflt
 
@@ -34,6 +37,7 @@ apps.bflt: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
 	$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libc.a \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libg.a \
+		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libm.a \
 		-lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 
 clean:
