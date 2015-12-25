@@ -10,3 +10,6 @@
 [submodule "newlib"]
 	path = newlib
 	url = git@github.com:insane-adding-machines/newlib.git
+[submodule "bflt-utils"]
+	path = bflt-utils
+	url = git@github.com:nihilus/bflt-utils.git
