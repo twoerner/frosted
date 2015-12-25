@@ -42,6 +42,7 @@ OBJS-y+=						\
 		chdir.o					\
 		chroot.o				\
 		close.o					\
+		crt0.o					\
 		dup.o					\
 		dup2.o					\
 		errno.o					\

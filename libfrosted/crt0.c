@@ -7,7 +7,7 @@ extern void _init_signal();
 /* no argv, argc for now */
 void _start() {
     int ex;
-    _init_signal();
+    // _init_signal(); /* This is for newlib signal emulation */
     ex = main();
     exit(ex);
 }
