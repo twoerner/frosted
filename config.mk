@@ -144,6 +144,70 @@ ifeq ($(DEVRNG),y)
     CFLAGS+=-DCONFIG_RNG
 endif
 
+#PICOTCP
+ifeq ($(PICOTCP),y)
+    ifeq ($(PICOTCP_IPV4),y)
+        CFLAGS+=-DCONFIG_PICOTCP_IPV4
+    endif
+    ifeq ($(PICOTCP_IPV6),y)
+        CFLAGS+=-DCONFIG_PICOTCP_IPV6
+    endif
+    ifeq ($(PICOTCP_DEVLOOP),y)
+        CFLAGS+=-DCONFIG_PICOTCP_DEVLOOP
+    endif
+    ifeq ($(PICOTCP_CRC),y)
+        CFLAGS+=-DCONFIG_PICOTCP_CRC
+    endif
+    ifeq ($(PICOTCP_ETH),y)
+        CFLAGS+=-DCONFIG_PICOTCP_ETH
+    endif
+    ifeq ($(PICOTCP_TCP),y)
+        CFLAGS+=-DCONFIG_PICOTCP_TCP
+    endif
+    ifeq ($(PICOTCP_UDP),y)
+        CFLAGS+=-DCONFIG_PICOTCP_UDP
+    endif
+    ifeq ($(PICOTCP_IPFRAG),y)
+        CFLAGS+=-DCONFIG_PICOTCP_IPFRAG
+    endif
+    ifeq ($(PICOTCP_NAT),y)
+        CFLAGS+=-DCONFIG_PICOTCP_NAT
+    endif
+    ifeq ($(PICOTCP_ICMP4),y)
+        CFLAGS+=-DCONFIG_PICOTCP_ICMP4
+    endif
+    ifeq ($(PICOTCP_PING),y)
+        CFLAGS+=-DCONFIG_PICOTCP_PING
+    endif
+    ifeq ($(PICOTCP_MCAST),y)
+        CFLAGS+=-DCONFIG_PICOTCP_MCAST
+    endif
+    ifeq ($(PICOTCP_DHCP_CLIENT),y)
+        CFLAGS+=-DCONFIG_PICOTCP_DHCP_CLIENT
+    endif
+    ifeq ($(PICOTCP_DHCP_SERVER),y)
+        CFLAGS+=-DCONFIG_PICOTCP_DHCP_SERVER
+    endif
+    ifeq ($(PICOTCP_DNS_CLIENT),y)
+        CFLAGS+=-DCONFIG_PICOTCP_DNS_CLIENT
+    endif
+    ifeq ($(PICOTCP_IPFILTER),y)
+        CFLAGS+=-DCONFIG_PICOTCP_IPFILTER
+    endif
+    ifeq ($(PICOTCP_OSLR),y)
+        CFLAGS+=-DCONFIG_PICOTCP_OSLR
+    endif
+    ifeq ($(PICOTCP_SLAACV4),y)
+        CFLAGS+=-DCONFIG_PICOTCP_SLAACV4
+    endif
+    ifeq ($(PICOTCP_SNTP_CLIENT),y)
+        CFLAGS+=-DCONFIG_PICOTCP_SNTP_CLIENT
+    endif
+    ifeq ($(PICOTCP_MEMORY_MANAGER),y)
+        CFLAGS+=-DCONFIG_PICOTCP_MEMORY_MANAGER
+    endif
+endif
+
 APPS_ORIGIN=$$(( $(KFLASHMEM_SIZE) * 1024))
 CFLAGS+=-DFLASH_ORIGIN=$(FLASH_ORIGIN)
 CFLAGS+=-DAPPS_ORIGIN=$(APPS_ORIGIN)

@@ -24,6 +24,7 @@ source "../kernel/stm32f4/Kconfig"
 source "../kernel/lpc17xx/Kconfig"
 source "../kernel/lm3s/Kconfig"
 
+
 config FLASH_SIZE_2MB
         bool
 config FLASH_SIZE_1MB
@@ -153,6 +154,13 @@ menu "Subsystems"
        config SOCK_UNIX
        bool "UNIX Sockets for IPC"
        default y
+   endmenu
+
+   menu "Networking"
+   	config TCPIP
+   	bool "TCP/IP Networking"
+   	default n
+        source "../net/tcpip/Kconfig"
    endmenu
 
    menu "Devices"

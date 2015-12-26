@@ -128,6 +128,9 @@ apps.elf: $(PREFIX)/lib/libfrosted.a $(APPS-y) apps/apps.ld
 kernel/libopencm3/lib/libopencm3_$(BOARD).a:
 	make -C kernel/libopencm3 $(OPENCM3FLAGS)
 
+net/tcpip/picotcp/build/lib/libpicotcp.a:
+	make -C net/tcpip/picotcp $(PICOFLAGS)
+
 $(PREFIX)/lib/libkernel.a: kernel/libopencm3/lib/libopencm3_$(BOARD).a
 
 kernel/$(BOARD)/$(BOARD).ld: kernel/$(BOARD)/$(BOARD).ld.in

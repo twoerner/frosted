@@ -1,8 +1,4 @@
-menuconfig PICOTCP 
-    bool "PicoTCP"
-    depends on !INET
-    default n
-if PICOTCP
+if TCPIP
 
 config PICOTCP_IPV4
     bool "Support IP version 4"
@@ -10,11 +6,11 @@ config PICOTCP_IPV4
 
 config PICOTCP_IPV6
     bool "Support IP version 6"
-    default y
+    default n
 
 config PICOTCP_DEVLOOP
     bool "Support loopback device"
-    default n
+    default y
 
 config PICOTCP_CRC
     bool "Enforce CRC checking on incoming packets"
@@ -23,7 +19,7 @@ config PICOTCP_CRC
 config PICOTCP_ETH
     depends on PICOTCP_IPV4
     bool "Support for ARP (IPv4 neighbor discovery)"
-    default y
+    default n
 
 
 config PICOTCP_TCP
@@ -55,12 +51,12 @@ config PICOTCP_ICMP4
 config PICOTCP_PING
     depends on PICOTCP_ICMP4
     bool "Support for ICMP PING API"
-    default n
+    default y
 
 config PICOTCP_MCAST
     depends on PICOTCP_UDP
     bool "Support for Multicast traffic"
-    default y
+    default n
 
 config PICOTCP_DHCP_CLIENT
     depends on PICOTCP_UDP && PICOTCP_IPV4
