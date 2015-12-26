@@ -34,11 +34,13 @@ LDFLAGS+=-fPIC -mlong-calls -fno-common -Wl,-elf2flt
 all: apps
 
 apps: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
-	$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted \
+	$(CC) -o $@  $(APPS-y) \
+		-lfrosted \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libc.a \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libg.a \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libm.a \
-		-lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
+		-lfrosted \
+		-Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 
 clean:
 	@rm -f *.o

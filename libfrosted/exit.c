@@ -14,8 +14,10 @@ int exit(int val)
     return sys_exit(val);
 }
 
+/* do not define _syscalls, they are defined by newlib syscall stubs */
+/*
 int _exit(int val) {
     return sys_exit(val);
 }
-
+*/
 
