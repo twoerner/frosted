@@ -35,11 +35,22 @@ all: apps
 
 apps: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
 	$(CC) -o $@  $(APPS-y) \
+		-Wl,--start-group \
 		-lfrosted \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libc.a \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libg.a \
 		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libm.a \
-		-lfrosted \
+		-Wl,--end-group \
+		-Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
+
+apps_newlib: $(APPS-y)
+	$(CC) -o $@  $(APPS-y) \
+		-Wl,--start-group \
+		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libc.a \
+		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libg.a \
+		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libgloss.a \
+		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libm.a \
+		-Wl,--end-group \
 		-Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 
 clean:
