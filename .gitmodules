@@ -4,6 +4,6 @@
 [submodule "apps/busybox"]
 	path = apps/busybox
 	url = git@github.com:insane-adding-machines/busybox.git
-[submodule "kernel/picotcp"]
-	path = kernel/picotcp
+[submodule "net/tcpip/picotcp"]
+	path = net/tcpip/picotcp
 	url = git@github.com:brabo/picotcp.git
