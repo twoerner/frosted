@@ -1,31 +1,33 @@
 #
 # Makefile for PicoTCP as Linux TCP/IP replacement.
 #
-ccflags-y += -I net/tcpip/picotcp/include -I net/tcpip/picotcp/modules -I net/tcpip
+-include ../../kconfig/.config
 
-obj-y     := af_inet.o \
-			netdev.o \
-			core.o \
-			ioctl.o \
-			proc.o
+CFLAGS-y += -I net/tcpip/picotcp/include -I net/tcpip/picotcp/modules -I net/tcpip
 
-obj-y     += picotcp/stack/pico_device.o \
-			picotcp/stack/pico_frame.o \
-			picotcp/stack/pico_protocol.o \
-			picotcp/stack/pico_socket.o \
-			picotcp/stack/pico_socket_multicast.o \
-			picotcp/stack/pico_stack.o \
-			picotcp/stack/pico_tree.o 
+OBJS-y     += net/tcpip/af_inet.o \
+			net/tcpip/netdev.o \
+			net/tcpip/core.o \
+			net/tcpip/ioctl.o \
+			net/tcpip/proc.o
 
-obj-$(CONFIG_PICOTCP_IPV4) 		+= picotcp/modules/pico_ipv4.o picotcp/modules/pico_ipfilter.o
-obj-$(CONFIG_PICOTCP_IPV6) 		+= picotcp/modules/pico_ipv6.o picotcp/modules/pico_icmp6.o picotcp/modules/pico_ipv6_nd.o
-obj-$(CONFIG_PICOTCP_DEVLOOP) 	+= picotcp/modules/pico_dev_loop.o
-obj-$(CONFIG_PICOTCP_ETH) 		+= picotcp/modules/pico_arp.o
-obj-$(CONFIG_PICOTCP_TCP) 		+= picotcp/modules/pico_tcp.o picotcp/modules/pico_socket_tcp.o
-obj-$(CONFIG_PICOTCP_UDP) 		+= picotcp/modules/pico_udp.o picotcp/modules/pico_socket_udp.o
-obj-$(CONFIG_PICOTCP_MULTICAST) += picotcp/modules/pico_igmp.o
-obj-$(CONFIG_PICOTCP_NAT) 		+= picotcp/modules/pico_nat.o
-obj-$(CONFIG_PICOTCP_ICMP4) 	+= picotcp/modules/pico_icmp4.o
-obj-$(CONFIG_PICOTCP_DNS_CLIENT)+= picotcp/modules/pico_dns_client.o picotcp/modules/pico_dns_common.o
+OBJS-y     += net/tcpip/picotcp/stack/pico_device.o \
+			net/tcpip/picotcp/stack/pico_frame.o \
+			net/tcpip/picotcp/stack/pico_protocol.o \
+			net/tcpip/picotcp/stack/pico_socket.o \
+			net/tcpip/picotcp/stack/pico_socket_multicast.o \
+			net/tcpip/picotcp/stack/pico_stack.o \
+			net/tcpip/picotcp/stack/pico_tree.o 
+
+OBJS-$(CONFIG_PICOTCP_IPV4) 		+= net/tcpip/picotcp/modules/pico_ipv4.o net/tcpip/picotcp/modules/pico_ipfilter.o
+OBJS-$(CONFIG_PICOTCP_IPV6) 		+= net/tcpip/picotcp/modules/pico_ipv6.o net/tcpip/picotcp/modules/pico_icmp6.o net/tcpip/picotcp/modules/pico_ipv6_nd.o
+OBJS-$(CONFIG_PICOTCP_DEVLOOP) 	+= net/tcpip/picotcp/modules/pico_dev_loop.o
+OBJS-$(CONFIG_PICOTCP_ETH) 		+= net/tcpip/picotcp/modules/pico_arp.o
+OBJS-$(CONFIG_PICOTCP_TCP) 		+= net/tcpip/picotcp/modules/pico_tcp.o net/tcpip/picotcp/modules/pico_socket_tcp.o
+OBJS-$(CONFIG_PICOTCP_UDP) 		+= net/tcpip/picotcp/modules/pico_udp.o net/tcpip/picotcp/modules/pico_socket_udp.o
+OBJS-$(CONFIG_PICOTCP_MULTICAST) += net/tcpip/picotcp/modules/pico_igmp.o
+OBJS-$(CONFIG_PICOTCP_NAT) 		+= net/tcpip/picotcp/modules/pico_nat.o
+OBJS-$(CONFIG_PICOTCP_ICMP4) 	+= net/tcpip/picotcp/modules/pico_icmp4.o
+OBJS-$(CONFIG_PICOTCP_DNS_CLIENT)+= net/tcpip/picotcp/modules/pico_dns_client.o net/tcpip/picotcp/modules/pico_dns_common.o
 
 

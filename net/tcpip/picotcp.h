@@ -7,7 +7,7 @@ holders.
 Author: Andrei Carp, Maxime Vincent
 *********************************************************************/
 #include "pico_defines.h"
-#include <linux/types.h>
+#include <sys/types.h>
 #include "pico_constants.h"
 #include "pico_config.h"
 #include "pico_stack.h"
@@ -21,16 +21,18 @@ Author: Andrei Carp, Maxime Vincent
 #include "pico_stack.h"
 #include "pico_tree.h"
 #include "pico_socket.h"
-#include <linux/mutex.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/kthread.h>
-#include <linux/module.h>
-#include <linux/wait.h>
-#include <net/ip.h>
-#include <net/protocol.h>
-#include <linux/if_arp.h>
-#include <linux/socket.h>
+#include "frosted_api.h"
+#include "frosted.h"
+//#include <linux/mutex.h>
+//#include <linux/types.h>
+//#include <linux/socket.h>
+//#include <linux/kthread.h>
+//#include <linux/module.h>
+//#include <linux/wait.h>
+//#include <net/ip.h>
+//#include <net/protocol.h>
+//#include <linux/if_arp.h>
+//#include <linux/socket.h>
 
 #ifndef PICO_BSD_SOCKETS_H_
 #define PICO_BSD_SOCKETS_H_
@@ -75,8 +77,8 @@ typedef int socklen_t;
 #ifndef __KERNEL__
 #define AF_INET     (PICO_PROTO_IPV4)
 #define AF_INET6    (PICO_PROTO_IPV6)
-#define SOCK_STREAM  (PICO_PROTO_TCP)
-#define SOCK_DGRAM   (PICO_PROTO_UDP)
+//#define SOCK_STREAM  (PICO_PROTO_TCP)
+//#define SOCK_DGRAM   (PICO_PROTO_UDP)
 
 #define SOL_SOCKET (0x80)
 
@@ -90,9 +92,6 @@ typedef int socklen_t;
 #define sockopt_get_name(x) ((x))
 
 
-struct sockaddr {
-    uint16_t sa_family;
-}; 
 
 struct in_addr {
     uint32_t s_addr;
@@ -109,6 +108,7 @@ struct __attribute__((packed)) sockaddr_in {
     uint16_t sin_port;
     struct in_addr sin_addr;
     uint8_t _pad[SOCKSIZE - 8];         
+     uint8_t  sin_zero[14];
 };
 
 

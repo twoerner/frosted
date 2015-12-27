@@ -157,7 +157,7 @@ menu "Subsystems"
    endmenu
 
    menu "Networking"
-   	config TCPIP
+   	config CONFIG_TCPIP
    	bool "TCP/IP Networking"
    	default n
         source "../net/tcpip/Kconfig"

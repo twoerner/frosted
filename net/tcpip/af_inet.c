@@ -1,7 +1,7 @@
 /* Linux kernel osal implementation  */
 #include <picotcp.h>
-#include <linux/tcp.h>
-#include <net/tcp_states.h>
+//#include <linux/tcp.h>
+//#include <net/tcp_states.h>
 
 #define SOCK_OPEN                   0
 #define SOCK_BOUND                  1
@@ -21,7 +21,7 @@ extern void *picoLock;
 
 /* UTILS */
 void * pico_mutex_init(void) {
-    struct mutex *m = kmalloc(sizeof(struct mutex), GFP_ATOMIC);
+    frosted_mutex_t *m = kcalloc(sizeof(frosted_mutex_t), 1);
     if (!m)
         return NULL;
     mutex_init(m);
@@ -32,20 +32,20 @@ void * pico_mutex_init(void) {
 
 void pico_mutex_deinit(void *_m)
 {
-    struct mutex *m = (struct mutex *)_m;
+    frosted_mutex_t *m = (frosted_mutex_t *)_m;
     mutex_destroy(m);
     kfree(m);
 }
 
 void pico_mutex_lock(void *_m)
 {
-    struct mutex *m = (struct mutex *)_m;
+    frosted_mutex_t *m = (frosted_mutex_t *)_m;
     mutex_lock(m);
 }
 
 void pico_mutex_unlock(void *_m)
 {
-    struct mutex *m = (struct mutex *)_m;
+    frosted_mutex_t *m = (frosted_mutex_t *)_m;
     mutex_unlock(m);
 }
 
