@@ -1,6 +1,8 @@
 # this makefile is to compile apps as a separate bFLT executable
 #
 #
+-include ../kconfig/.config
+-include ../config.mk
 
 # PATH CONFIG
 FROSTED_PATH=..

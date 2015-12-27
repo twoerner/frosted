@@ -84,7 +84,7 @@ SHELL=/bin/bash
 APPS_START = 0x20000
 PADTO = $$(($(FLASH_ORIGIN)+$(APPS_START)))
 
-all: kconfig/.config image.bin
+all: kconfig/.config image.bin tools/xipfstool
 
 image.bin: image_bflt
 	cp $< $@
@@ -93,7 +93,6 @@ image.bin: image_bflt
 
 kernel/syscall_table.c: kernel/syscall_table_gen.py
 	python2 $^
-
 
 include/syscall_table.h: kernel/syscall_table.c
 
@@ -107,6 +106,9 @@ $(PREFIX)/lib/libfrosted.a: FORCE
 
 apps/apps: $(PREFIX)/lib/libfrosted.a
 	make -C apps
+
+tools/xipfstool: tools/xipfs.c
+	make -C tools
 
 image_bin: kernel.elf apps.elf
 	export PADTO=`python2 -c "print ( $(KFLASHMEM_SIZE) * 1024) + int('$(FLASH_ORIGIN)', 16)"`;	\
@@ -181,6 +183,7 @@ clean: kconfig/.config
 	@rm -f *.map *.bin *.elf
 	@rm -f apps/apps.ld
 	@rm -f kernel/$(BOARD)/$(BOARD).ld
+	@rm -f tools/xipfstool
 	@find . |grep "\.o" | xargs -x rm -f
 
 kconfig/.config:

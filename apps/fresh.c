@@ -54,6 +54,14 @@ const struct binutils bin_table[] = {
     {"cat", bin_cat},
     {"dice", bin_dice},
     {"random", bin_random},
+    {"dirname", bin_dirname},
+    {"tee", bin_tee},
+    {"true", bin_true},
+    {"false", bin_false},
+    {"arch", bin_arch},
+    {"wc", bin_wc},
+    {"cut", bin_cut},
+    {"morse", bin_morse},
     {"", NULL}
 };
 
@@ -347,7 +355,7 @@ void launchProg(char **args, int background){
 */ 
 void fileIO(char * args[], char* inputFile, char* outputFile, int option)
 {
-     
+    atoi("22"); 
     int err = -1;
     int fileDescriptor; // between 0 and 19, describing the output or input file
     const struct binutils *b;
