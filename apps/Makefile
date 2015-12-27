@@ -44,7 +44,7 @@ apps: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
 		-Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 
 apps_newlib: $(APPS-y)
-	$(CC) -o $@  $(APPS-y) \
+	$(CC) -o apps  $(APPS-y) \
 		-Wl,--start-group \
 		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libc.a \
 		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libg.a \
