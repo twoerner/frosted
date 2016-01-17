@@ -82,6 +82,8 @@ CFLAGS-$(DEVADC)+=-DCONFIG_DEVADC
 OBJS-$(DEVRNG)+=kernel/drivers/random.o
 CFLAGS-$(DEVRNG)+=-DCONFIG_RNG
 
+OBJS-$(CONFIG_PICOTCP)+=net/tcpip/picotcp/build/lib/libpicotcp.a
+
 OBJS-$(MACH_STM32F407Discovery)+=kernel/$(BOARD)/stm32f407discovery.o 
 OBJS-$(MACH_STM32F405Pyboard)+=kernel/$(BOARD)/stm32f405pyboard.o 
 OBJS-$(MACH_STM32F4x1Discovery)+=kernel/$(BOARD)/stm32f4x1discovery.o 
@@ -159,7 +161,7 @@ kernel/$(BOARD)/$(BOARD).ld: kernel/$(BOARD)/$(BOARD).ld.in
 			 sed -e "s/__KRAMMEM_SIZE/$$KRAMMEM_SIZE_B/g" \
 			 >$@
 
-kernel.elf: $(PREFIX)/lib/libkernel.a $(OBJS-y) kernel/libopencm3/lib/libopencm3_$(BOARD).a kernel/$(BOARD)/$(BOARD).ld net/tcpip/picotcp/build/lib/libpicotcp.a
+kernel.elf: $(PREFIX)/lib/libkernel.a $(OBJS-y) kernel/libopencm3/lib/libopencm3_$(BOARD).a kernel/$(BOARD)/$(BOARD).ld
 	$(CC) -o $@   -Tkernel/$(BOARD)/$(BOARD).ld -Wl,--start-group $(PREFIX)/lib/libkernel.a $(OBJS-y) kernel/libopencm3/lib/libopencm3_$(BOARD).a -Wl,--end-group \
 		-Wl,-Map,kernel.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 	

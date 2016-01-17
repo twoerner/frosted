@@ -5,13 +5,13 @@
 
 CFLAGS-y += -I net/tcpip/picotcp/include -I net/tcpip/picotcp/modules -I net/tcpip
 
-OBJS-y     += net/tcpip/af_inet.o \
+OBJS-$(CONFIG_PICOTCP)     += net/tcpip/af_inet.o \
 			net/tcpip/netdev.o \
 			net/tcpip/core.o \
 			net/tcpip/ioctl.o \
 			net/tcpip/proc.o
 
-OBJS-y     += net/tcpip/picotcp/stack/pico_device.o \
+OBJS-$(CONFIG_PICOTCP)     += net/tcpip/picotcp/stack/pico_device.o \
 			net/tcpip/picotcp/stack/pico_frame.o \
 			net/tcpip/picotcp/stack/pico_protocol.o \
 			net/tcpip/picotcp/stack/pico_socket.o \

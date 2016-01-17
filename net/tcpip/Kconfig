@@ -1,5 +1,11 @@
 if CONFIG_TCPIP
 
+config CONFIG_PICOTCP
+    bool "Built-in picoTCP in kernel space"
+    default n
+
+if CONFIG_PICOTCP
+
 config CONFIG_PICOTCP_IPV4
     bool "Support IP version 4"
     default y
@@ -47,5 +53,6 @@ config CONFIG_PICOTCP_DNS_CLIENT
     bool "DNS client for dynamic name resolution"
     default n
 
+endif
 endif
     
