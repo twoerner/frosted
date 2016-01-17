@@ -133,7 +133,25 @@ config KFLASHMEM_SIZE
 
 config KRAMMEM_SIZE
    int "Kernel RAM size (KB)"
-   default 6
+   default 32
+
+choice
+prompt "Default size for tasks stack memory"
+default TASK_STACK_SIZE_2K 
+
+   config TASK_STACK_SIZE_1K
+   bool "Tiny stack (1024 Bytes)"
+
+   config TASK_STACK_SIZE_2K
+   bool "Small stack (2048 Bytes)"
+
+   config TASK_STACK_SIZE_4K
+   bool "Big stack (4096 Bytes)"
+
+   config TASK_STACK_SIZE_8K
+   bool "Huge stack (8192 Bytes)"
+
+endchoice
 
 menu "Subsystems"
    menu "Filesystems"
@@ -212,10 +230,37 @@ menu "Subsystems"
 
        endif
 
+       menuconfig DEVF4EXTI
+       bool "STM32F4 EXTI driver"
+       depends on (ARCH_STM32F401 ||ARCH_STM32F411 || ARCH_STM32F407 || ARCH_STM32F405  || ARCH_STM32F429 )
+       default n
+
        menuconfig DEVADC
        bool "Generic ADC driver"
        depends on (ARCH_STM32F401 ||ARCH_STM32F411 || ARCH_STM32F407 || ARCH_STM32F405  || ARCH_STM32F429 )
        default n
+
+       menuconfig DEVF4I2C
+       bool "STM32F4 I2C driver"
+       depends on (ARCH_STM32F401 ||ARCH_STM32F411 || ARCH_STM32F407 || ARCH_STM32F405  || ARCH_STM32F429 )
+       default n
+
+       if DEVF4I2C
+            config I2C_1
+            bool "I2C 1"
+       endif
+
+       config DEVCS43L22
+       tristate "CS43L22 driver (Stereo DAC)"
+       depends on ( I2C_1)
+       default n
+
+       config DEVLSM303DLHC
+       tristate "LSM303DLHC driver (Accelerometer & Magnetometer)"
+       depends on ( I2C_1)
+       default n
+
+
        
        menuconfig DEVSPI
        bool "Generic SPI driver"
@@ -228,8 +273,8 @@ menu "Subsystems"
        endif
 
        config DEVL3GD20
-       tristate "L3GD20 driver"
-       depends on ( MACH_STM32F4x1Discovery && SPI_1)
+       tristate "L3GD20 driver (Gyro)"
+       depends on ( SPI_1)
        default n
 
        config DEVGPIO
@@ -239,7 +284,7 @@ menu "Subsystems"
 
        config DEVRNG
        depends on ARCH_STM32F4
-       bool "Generic RNG driver"
+       bool "STM32F4 RNG driver"
        default y
 
    endmenu

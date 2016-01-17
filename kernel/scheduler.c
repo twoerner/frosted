@@ -34,6 +34,48 @@
 
 #define STACK_THRESHOLD 64
 
+static char _my_x_str[11] = "";
+static char *x_str(uint32_t x)
+{
+    int i;
+    uint8_t val;
+    _my_x_str[0] = '0';
+    _my_x_str[1] = 'x';
+    for (i = 0; i < 8; i++) {
+        val = (((x >> ((7 - i) << 2)) & 0x0000000F));
+        if (val < 10)
+            _my_x_str[i + 2] = val + '0';
+        else
+            _my_x_str[i + 2] = (val - 10) + 'A';
+    }
+    _my_x_str[10] = 0;
+    return _my_x_str;
+}
+
+static char _my_pid_str[6];
+static char *pid_str(uint16_t p)
+{
+    int i = 0;
+    if (p >= 10000) {
+        _my_pid_str[i++] = (p/10000) + '0';
+        p = p % 10000;
+    }
+    if (i > 0 || p >= 1000) {
+        _my_pid_str[i++] = (p/1000) + '0';
+        p = p % 1000;
+    }
+    if (i > 0 || p >= 100) {
+        _my_pid_str[i++] = (p/100) + '0';
+        p = p % 100;
+    }
+    if (i > 0 || p >= 10) {
+        _my_pid_str[i++] = (p/10) + '0';
+        p = p % 10;
+    }
+    _my_pid_str[i++] = p + '0';
+    _my_pid_str[i] = 0;
+    return _my_pid_str;
+}
 
 /* Array of syscalls */
 static void *sys_syscall_handlers[_SYSCALLS_NR] = {
@@ -56,8 +98,8 @@ int sys_register_handler(uint32_t n, int(*_sys_c)(uint32_t arg1, uint32_t arg2, 
 #define MAX_TASKS 16
 #define BASE_TIMESLICE (20)
 #define TIMESLICE(x) ((BASE_TIMESLICE) + ((x)->tb.prio << 2))
-#define CONFIG_TASK_STACK_SIZE (3000)
-#define INIT_CONFIG_TASK_STACK_SIZE (256)
+#define SCHEDULER_STACK_SIZE ((CONFIG_TASK_STACK_SIZE - sizeof(struct task_block)) - F_MALLOC_OVERHEAD)
+#define INIT_SCHEDULER_STACK_SIZE (256)
 
 struct __attribute__((packed)) nvic_stack_frame {
     uint32_t r0;
@@ -152,12 +194,12 @@ struct __attribute__((packed)) task_block {
 
 struct __attribute__((packed)) task {
     struct task_block tb;
-    uint32_t stack[CONFIG_TASK_STACK_SIZE / 4];
+    uint32_t stack[SCHEDULER_STACK_SIZE / 4];
 };
 
-static struct task struct_task_init;
-static struct task_block struct_task_block_kernel;
-static struct task *const kernel = (struct task *)(&struct_task_block_kernel);
+static struct task struct_task_kernel;
+static struct task *const kernel = (struct task *)(&struct_task_kernel);
+
 
 static int number_of_tasks = 0;
 
@@ -222,6 +264,15 @@ static void task_destroy(struct task *t)
     }
     tasklist_del(&tasks_idling, t->tb.pid);
     kfree(t->tb.filedesc);
+    if (t->tb.arg) {
+        char **arg = (char **)(t->tb.arg);
+        i = 0;
+        while(arg[i]) {
+            f_free(arg[i]);
+            i++;
+        }
+    }
+    f_free(t->tb.arg);
     task_space_free(t);
     number_of_tasks--;
 }
@@ -632,7 +683,7 @@ unsigned scheduler_stack_used(int pid)
     if (!t) 
         t = tasklist_get(&tasks_idling, pid);
     if (t)
-        return CONFIG_TASK_STACK_SIZE - ((char *)t->tb.sp - (char *)t->tb.cur_stack);
+        return SCHEDULER_STACK_SIZE - ((char *)t->tb.sp - (char *)t->tb.cur_stack);
     else return 0;
 }
 
@@ -672,6 +723,37 @@ void task_end(void)
     }
 }
 
+static void task_resume_vfork(int pid);
+
+static void *task_pass_args(void *_args)
+{
+    char **args = (char **)_args;
+    char **new = NULL;
+    int i = 0, n = 0;
+    if (!_args)
+        return NULL;
+    while(args[n] != NULL) {
+        n++;
+    }
+    new = f_malloc(MEM_USER, (n + 1) * (sizeof(char*)));
+
+    if (!new)
+        return NULL;
+
+    new[n] = NULL;
+
+    for(i = 0; i < n; i++) {
+        size_t l = strlen(args[i]);
+        if (l > 0) { 
+            new[i] = f_malloc(MEM_USER, l + 1);
+            if (!new[i])
+                break;
+            memcpy(new[i], args[i], l + 1);
+        }
+    }
+    return new;
+}
+
 static void task_create_real(volatile struct task *new, void (*init)(void *), void *arg, unsigned int prio, uint32_t r9val)
 {
     struct nvic_stack_frame *nvic_frame;
@@ -679,7 +761,7 @@ static void task_create_real(volatile struct task *new, void (*init)(void *), vo
     uint8_t *sp;
 
     new->tb.start = init;
-    new->tb.arg = arg;
+    new->tb.arg = task_pass_args(arg);
     new->tb.timeslice = TIMESLICE(new);
     new->tb.state = TASK_RUNNABLE;
     new->tb.sighdlr = NULL;
@@ -690,7 +772,7 @@ static void task_create_real(volatile struct task *new, void (*init)(void *), vo
             pt = tasklist_get(&tasks_running, new->tb.ppid);
         if (pt) {
             /* Restore parent's stack */
-            memcpy((void *)pt->tb.cur_stack, (void *)&new->stack, CONFIG_TASK_STACK_SIZE);
+            memcpy((void *)pt->tb.cur_stack, (void *)&new->stack, SCHEDULER_STACK_SIZE);
             task_resume_vfork(pt->tb.pid);
         }
         new->tb.flags &= (~TASK_FLAG_VFORK);
@@ -698,14 +780,14 @@ static void task_create_real(volatile struct task *new, void (*init)(void *), vo
 
     
     /* stack memory */
-    sp = (((uint8_t *)(&new->stack)) + CONFIG_TASK_STACK_SIZE - NVIC_FRAME_SIZE);
+    sp = (((uint8_t *)(&new->stack)) + SCHEDULER_STACK_SIZE - NVIC_FRAME_SIZE);
     new->tb.cur_stack = &new->stack;
 
     /* Stack frame is at the end of the stack space */
     nvic_frame = (struct nvic_stack_frame *) sp;
     memset(nvic_frame, 0, NVIC_FRAME_SIZE);
-    nvic_frame->r0 = (uint32_t) arg;
-    nvic_frame->pc = (uint32_t) init;
+    nvic_frame->r0 = (uint32_t) new->tb.arg;
+    nvic_frame->pc = (uint32_t) new->tb.start;
     nvic_frame->lr = (uint32_t) task_end;
     nvic_frame->psr = 0x01000000u;
     sp -= EXTRA_FRAME_SIZE;
@@ -720,11 +802,7 @@ int task_create(void (*init)(void *), void *arg, unsigned int prio)
     int i;
 
     irq_off();
-    if (number_of_tasks == 0) {
-        new = &struct_task_init;
-    } else {
-        new = task_space_alloc(sizeof(struct task));
-    }
+    new = task_space_alloc(sizeof(struct task));
     if (!new) {
         return -ENOMEM;
     }
@@ -762,6 +840,7 @@ int scheduler_exec(void (*init)(void *), void *args)
     //asm volatile ("msr "PSP", %0" :: "r" (_cur_task->tb.sp + EXTRA_FRAME_SIZE));
     asm volatile ("msr "PSP", %0" :: "r" (_cur_task->tb.sp));
     _cur_task->tb.state = TASK_RUNNING;
+    mpu_task_on((void *)(((uint32_t)_cur_task->tb.cur_stack) - (sizeof(struct task_block) + F_MALLOC_OVERHEAD) ));
     return 0;
 }
 
@@ -814,7 +893,7 @@ int sys_vfork_hdlr(void)
      * sp remains in the parent's pool.
      * This will be restored upon exit/exec
      */
-    memcpy(&new->stack, _cur_task->tb.cur_stack, CONFIG_TASK_STACK_SIZE);
+    memcpy(&new->stack, _cur_task->tb.cur_stack, SCHEDULER_STACK_SIZE);
     if (new != _cur_task) {
         new->tb.sp = _cur_task->tb.sp;
         new->tb.cur_stack = _cur_task->tb.cur_stack;
@@ -907,6 +986,7 @@ void __naked  pend_sv_handler(void)
         restore_kernel_context();
         runnable = RUN_KERNEL;
     } else {
+        mpu_task_on((void *)(((uint32_t)_cur_task->tb.cur_stack) - (sizeof(struct task_block) + F_MALLOC_OVERHEAD) ));
         asm volatile ("msr "PSP", %0" :: "r" (_cur_task->tb.sp));
         asm volatile ("isb");
         asm volatile ("msr CONTROL, %0" :: "r" (0x01));
@@ -977,7 +1057,7 @@ void task_resume(int pid)
     }
 }
 
-void task_resume_vfork(int pid)
+static void task_resume_vfork(int pid)
 {
     struct task *t = tasklist_get(&tasks_idling, pid);
     if ((t) && t->tb.state == TASK_FORKED) {
@@ -1005,7 +1085,7 @@ void task_terminate(int pid)
                     pt = tasklist_get(&tasks_running, t->tb.ppid);
                 /* Restore parent's stack */
                 if (pt) {
-                    memcpy((void *)pt->tb.cur_stack, (void *)&_cur_task->stack, CONFIG_TASK_STACK_SIZE);
+                    memcpy((void *)pt->tb.cur_stack, (void *)&_cur_task->stack, SCHEDULER_STACK_SIZE);
                     t->tb.flags &= ~TASK_FLAG_VFORK;
                 }
                 task_resume_vfork(t->tb.ppid);
@@ -1148,6 +1228,29 @@ int sys_exit_hdlr(uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, ui
     task_terminate(_cur_task->tb.pid);
 }
 
+int task_segfault(uint32_t address, uint32_t instruction, int flags)
+{
+    char segv_msg[128] = "Memory fault: process (pid=";
+    if (in_kernel())
+        return -1;
+    if (_cur_task->tb.state == TASK_ZOMBIE)
+        return 0;
+    if ((_cur_task->tb.n_files > 2) &&  _cur_task->tb.filedesc[2].fno->owner->ops.write) {
+        strcat(segv_msg, pid_str(_cur_task->tb.pid));
+        if (flags == MEMFAULT_ACCESS) {
+            strcat(segv_msg, ") attempted access to memory at ");
+            strcat(segv_msg, x_str(address));
+        }
+        if (flags == MEMFAULT_DOUBLEFREE) {
+            strcat(segv_msg, ") attempted double free");
+        }
+        strcat(segv_msg, ". Killed.\r\n");
+        _cur_task->tb.filedesc[2].fno->owner->ops.write(_cur_task->tb.filedesc[2].fno, segv_msg, strlen(segv_msg));
+    }
+    task_terminate(_cur_task->tb.pid);
+    return 0;
+}
+
 static uint32_t *a4 = NULL;
 static uint32_t *a5 = NULL;
 struct extra_stack_frame *stored_extra = NULL;
@@ -1207,6 +1310,7 @@ int __attribute__((naked)) sv_call_handler(uint32_t n, uint32_t arg1, uint32_t a
         restore_kernel_context();
         runnable = RUN_KERNEL;
     } else {
+        mpu_task_on((void *)(((uint32_t)_cur_task->tb.cur_stack) - (sizeof(struct task_block) + F_MALLOC_OVERHEAD) ));
         asm volatile ("msr "PSP", %0" :: "r" (_cur_task->tb.sp));
         asm volatile ("isb");
         asm volatile ("msr CONTROL, %0" :: "r" (0x01));

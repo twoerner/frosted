@@ -13,6 +13,10 @@ ifeq ($(PRODCONS),y)
   CFLAGS+=-DCONFIG_PRODCONS=1
 endif
 
+ifeq ($(IDDLELEDS),y)
+    CFLAGS += -DCONFIG_IDDLELEDS=1
+endif
+
 CROSS_COMPILE?=arm-none-eabi-
 CC:=$(CROSS_COMPILE)gcc
 AS:=$(CROSS_COMPILE)as
@@ -54,14 +58,23 @@ CFLAGS-$(SOCK_UNIX)+=-DCONFIG_SOCK_UNIX
 OBJS-$(DEVL3GD20)+= kernel/drivers/l3gd20.o
 CFLAGS-$(DEVL3GD20)+=-DCONFIG_DEVL3GD20
 
+OBJS-$(DEVLSM303DLHC)+= kernel/drivers/lsm303dlhc.o
+CFLAGS-$(DEVLSM303DLHC)+=-DCONFIG_DEVLSM303DLHC
+
 OBJS-$(DEVSPI)+= kernel/drivers/spi.o
 CFLAGS-$(DEVSPI)+=-DCONFIG_DEVSPI
+
+OBJS-$(DEVF4I2C)+= kernel/drivers/stm32f4_i2c.o
+CFLAGS-$(DEVF4I2C)+=-DCONFIG_DEVI2C
 
 OBJS-$(DEVUART)+= kernel/drivers/uart.o
 CFLAGS-$(DEVUART)+=-DCONFIG_DEVUART
 
 OBJS-$(DEVGPIO)+=kernel/drivers/gpio.o
 CFLAGS-$(DEVGPIO)+=-DCONFIG_DEVGPIO
+
+OBJS-$(DEVF4EXTI)+=kernel/drivers/stm32f4_exti.o
+CFLAGS-$(DEVF4EXTI)+=-DCONFIG_DEVF4EXTI
 
 OBJS-$(DEVADC)+=kernel/drivers/adc.o
 CFLAGS-$(DEVADC)+=-DCONFIG_DEVADC
@@ -85,8 +98,7 @@ APPS_START = 0x20000
 PADTO = $$(($(FLASH_ORIGIN)+$(APPS_START)))
 
 include net/tcpip/Makefile
-
-all: image.bin
+all: image.bin tools/xipfstool
 
 kernel/syscall_table.c: kernel/syscall_table_gen.py
 	python2 $^
@@ -101,6 +113,9 @@ $(PREFIX)/lib/libkernel.a: FORCE
 
 $(PREFIX)/lib/libfrosted.a: FORCE
 	make -C libfrosted
+
+tools/xipfstool: tools/xipfs.c
+	make -C tools
 
 image.bin: kernel.elf apps.elf
 	export PADTO=`python2 -c "print ( $(KFLASHMEM_SIZE) * 1024) + int('$(FLASH_ORIGIN)', 16)"`;	\
@@ -162,11 +177,16 @@ qemu2: image.bin
 menuconfig:
 	@$(MAKE) -C kconfig/ menuconfig -f Makefile.frosted
 
+
+malloc_test:
+	gcc -o malloc.test kernel/malloc.c -Iinclude -Inewlib/include -DCONFIG_KRAM_SIZE=4
+
 libclean:
 	@make -C kernel/libopencm3 clean
 	@make -C net/tcpip/picotcp clean
 
 clean:
+	rm -f malloc.test
 	rm -f  kernel/$(BOARD)/$(BOARD).ld
 	@make -C kernel clean
 	@make -C libfrosted clean
@@ -174,5 +194,6 @@ clean:
 	@rm -f *.map *.bin *.elf
 	@rm -f apps/apps.ld
 	@rm -f kernel/$(BOARD)/$(BOARD).ld
+	@rm -f tools/xipfstool
 	@find . |grep "\.o" | xargs -x rm -f
 

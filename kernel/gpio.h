@@ -9,11 +9,8 @@ struct gpio_addr {
     uint8_t speed;
     uint8_t optype;
     uint8_t af;
-    uint8_t exti;
-    uint8_t trigger;
     const char* name;
 };
 
 void gpio_init(struct fnode * dev,  const struct gpio_addr gpio_addrs[], int num_gpios);
-
 #endif

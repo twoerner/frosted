@@ -117,14 +117,17 @@ void idling(void *arg)
 # define LED3 "/dev/null"
 #endif
 
+#ifdef CONFIG_IDDLELEDS
     led[0] = open(LED0, O_RDWR, 0);
     led[1] = open(LED1, O_RDWR, 0);
     led[2] = open(LED2, O_RDWR, 0);
     led[3] = open(LED3, O_RDWR, 0);
 
     if (led[0] >= 0) {
+#endif
         while(1) {
             for (i = 0; i < 9; i++) {
+#ifdef CONFIG_IDDLELEDS
                 if (i < 4) {
                     write(led[i], "0", 1);
                 } else {
@@ -132,12 +135,15 @@ void idling(void *arg)
                     for(j = 0; j < 4; j++)
                         write(led[j], &val, 1);
                 }
+#endif
                 sleep(200);
             }
         }
+#ifdef CONFIG_IDDLELEDS
     } else {
         while(1) { sleep(1000); } /* GPIO unavailable, just sleep. */
     }
+#endif
 }
 
 static sem_t *sem = NULL;
@@ -194,10 +200,13 @@ void init(void *arg)
 {
     volatile int i = (int)arg;
     volatile int pid;
+    const char arg0_fresh[] = "fresh";
+    const char arg0_idling[] = "idling";
+    const char *arg_fresh[2]={ arg0_fresh, NULL };
+    const char *arg_idling[2]={ arg0_idling, NULL };
     int status;
     int fd, sd;
     uint32_t *temp;
-    int testval = 42;
     /* c-lib and init test */
     temp = (uint32_t *)malloc(32);
     free(temp);
@@ -215,27 +224,13 @@ void init(void *arg)
 
     /* Thread create test */
     if (vfork() == 0)
-        execb(idling, &testval);
-    //thread_create(idling, &testval, 1);
+        execb(idling, &arg_idling);
  
 #ifdef CONFIG_FRESH
     if (vfork() == 0)
-        execb(fresh, &testval);
-     // thread_create(fresh, &testval, 1);
+        execb(fresh, &arg_fresh);
       
 #endif
-
-#ifdef CONFIG_PRODCONS
-    if (thread_create(prod, &testval, 1) < 0)
-        IDLE();
-    if (thread_create(cons, &testval, 1) < 0)
-        IDLE();
-#endif
-/*
-    if (vfork() == 0) {
-        execb(posix_test, &testval);
-    }
-*/
 
     while(1) {
         pid = wait(&status);

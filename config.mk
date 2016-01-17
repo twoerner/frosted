@@ -208,6 +208,11 @@ ifeq ($(PICOTCP),y)
     endif
 endif
 
+#I2Cs
+ifeq ($(I2C_1),y)
+    CFLAGS+=-DCONFIG_I2C_1
+endif
+
 APPS_ORIGIN=$$(( $(KFLASHMEM_SIZE) * 1024))
 CFLAGS+=-DFLASH_ORIGIN=$(FLASH_ORIGIN)
 CFLAGS+=-DAPPS_ORIGIN=$(APPS_ORIGIN)

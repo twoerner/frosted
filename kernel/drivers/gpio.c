@@ -26,6 +26,22 @@ struct dev_gpio {
 
 static struct dev_gpio DEV_GPIO[MAX_GPIOS];
 
+static int devgpio_write(struct fnode *fno, const void *buf, unsigned int len);
+static int devgpio_ioctl(struct fnode *fno, const uint32_t cmd, void *arg);
+static int devgpio_read (struct fnode *fno, void *buf, unsigned int len);
+static int devgpio_poll (struct fnode *fno, uint16_t events, uint16_t *revents);
+
+
+static struct module mod_devgpio = {
+    .family = FAMILY_FILE,
+    .name = "gpio",
+    .ops.open = device_open,
+    .ops.read = devgpio_read, 
+    .ops.poll = devgpio_poll,
+    .ops.write = devgpio_write,
+    .ops.ioctl = devgpio_ioctl,
+};
+
 #ifdef LM3S
 #endif
 #ifdef STM32F4
@@ -52,38 +68,6 @@ static struct dev_gpio DEV_GPIO[MAX_GPIOS];
                                                          gpio_set_af(P, A, I);
 
 
-void exti_isr(uint32_t exti_base)
-{
-    exti_reset_request(exti_base);
-    /* What next? */
-}
-void exti0_isr(void)
-{
-    exti_isr(EXTI0);
-}
-void exti1_isr(void)
-{
-    exti_isr(EXTI1);
-}
-void exti2_isr(void)
-{
-    exti_isr(EXTI2);
-}
-void exti3_isr(void)
-{
-    exti_isr(EXTI3);
-}
-void exti4_isr(void)
-{
-    exti_isr(EXTI4);
-}
-void exti9_5_isr(void)
-{
-
-}
-void exti15_10_isr(void)
-{
-}
 #endif
 
 #ifdef LPC17XX
@@ -121,33 +105,6 @@ void eint3_isr(void)
 }
 
 #endif
-
-static int devgpio_write(struct fnode *fno, const void *buf, unsigned int len);
-static int devgpio_ioctl(struct fnode *fno, const uint32_t cmd, void *arg);
-static int devgpio_read (struct fnode *fno, void *buf, unsigned int len);
-static int devgpio_poll (struct fnode *fno, uint16_t events, uint16_t *revents);
-
-
-static struct module mod_devgpio = {
-    .family = FAMILY_FILE,
-    .name = "gpio",
-    .ops.open = device_open,
-    .ops.read = devgpio_read, 
-    .ops.poll = devgpio_poll,
-    .ops.write = devgpio_write,
-    .ops.ioctl = devgpio_ioctl,
-};
-
-/* Use static state for now. Future drivers can have multiple structs for this. */
-static int gpio_pid = 0;
-static frosted_mutex_t *gpio_mutex;
-
-void GPIO_Handler(void)
-{
-    /* If a process is attached, resume the process */
-    if (gpio_pid > 0) 
-        task_resume(gpio_pid);
-}
 
 static int devgpio_write(struct fnode * fno, const void *buf, unsigned int len)
 {
@@ -204,23 +161,15 @@ static int devgpio_read(struct fnode * fno, void *buf, unsigned int len)
 {
     int out;
     struct dev_gpio *gpio;
-    volatile int len_available = 1;
     char *ptr = (char *)buf;
 
     gpio = (struct dev_gpio *)FNO_MOD_PRIV(fno, &mod_devgpio);
     if(!gpio)
         return -1;
 
-    if (len_available < len) {
-        gpio_pid = scheduler_get_cur_pid();
-        task_suspend();
-        out = SYS_CALL_AGAIN;
-        frosted_mutex_unlock(gpio_mutex);
-    } else {
-        /* GPIO: get current value */
-        *((uint8_t*)buf) = gpio_get(gpio->base, gpio->pin) ? '1':'0';
-        return 1;
-    }
+    /* GPIO: get current value */
+    *((uint8_t*)buf) = gpio_get(gpio->base, gpio->pin) ? '1':'0';
+    return 1;
 }
 
 
@@ -238,6 +187,7 @@ static int devgpio_poll(struct fnode * fno, uint16_t events, uint16_t *revents)
     }
     return ret;
 }
+
 
 static void gpio_fno_init(struct fnode *dev, uint32_t n, const struct gpio_addr * addr)
 {
@@ -284,28 +234,28 @@ void gpio_init(struct fnode * dev,  const struct gpio_addr gpio_addrs[], int num
                             exti_set_trigger(EXTI0, gpio_addrs[i].trigger);
                             exti_clear_flag(EXTI0);
                             nvic_clear_pending_irq(NVIC_EINT0_IRQ);
-                            nvic_enable_irq(NVIC_EINT0_IRQ);                    break;
+                            nvic_enable_irq(NVIC_EINT0_IRQ);
                             break;
                         case GPIOPIN11: 
                             nvic_disable_irq(NVIC_EINT1_IRQ);
                             exti_set_trigger(EXTI1, gpio_addrs[i].trigger);
                             nvic_clear_pending_irq(NVIC_EINT1_IRQ);
                             exti_clear_flag(EXTI1);
-                            nvic_enable_irq(NVIC_EINT1_IRQ);                    break;
+                            nvic_enable_irq(NVIC_EINT1_IRQ);
                             break;
                         case GPIOPIN12: 
                             nvic_disable_irq(NVIC_EINT2_IRQ);
                             exti_set_trigger(EXTI2, gpio_addrs[i].trigger);
                             nvic_clear_pending_irq(NVIC_EINT2_IRQ);
                             exti_clear_flag(EXTI2);
-                            nvic_enable_irq(NVIC_EINT2_IRQ);                    break;
+                            nvic_enable_irq(NVIC_EINT2_IRQ);
                             break;
                         case GPIOPIN13: 
                             nvic_disable_irq(NVIC_EINT3_IRQ);
                             exti_set_trigger(EXTI3, gpio_addrs[i].trigger);
                             nvic_clear_pending_irq(NVIC_EINT3_IRQ);
                             exti_clear_flag(EXTI3);
-                            nvic_enable_irq(NVIC_EINT3_IRQ);                    break;
+                            nvic_enable_irq(NVIC_EINT3_IRQ);
                             break;
                         default: 
                             break;
@@ -317,27 +267,6 @@ void gpio_init(struct fnode * dev,  const struct gpio_addr gpio_addrs[], int num
                 gpio_mode_setup(gpio_addrs[i].base, gpio_addrs[i].mode, GPIO_PUPD_NONE, gpio_addrs[i].pin);
                 break;
         }
-
-        if(gpio_addrs[i].exti)
-        {
-#ifdef STM32F4
-            switch(gpio_addrs[i].pin)
-            {
-                case GPIO0:     exti = EXTI0;       exti_irq = NVIC_EXTI0_IRQ;  break;
-                case GPIO1:     exti = EXTI1;       exti_irq = NVIC_EXTI1_IRQ;  break;
-                case GPIO2:     exti = EXTI2;       exti_irq = NVIC_EXTI2_IRQ;  break;
-                case GPIO3:     exti = EXTI3;       exti_irq = NVIC_EXTI3_IRQ;  break;
-                case GPIO4:     exti = EXTI4;       exti_irq = NVIC_EXTI4_IRQ;  break;
-                /* More to add here 5_9 10_15 */
-                default: break;
-            }
-            nvic_enable_irq(exti_irq);
-            exti_select_source(exti, gpio_addrs[i].base);
-            exti_set_trigger(exti, gpio_addrs[i].trigger);
-            exti_enable_request(exti);
-#endif
-        }
-        
     }
     register_module(&mod_devgpio);
 }

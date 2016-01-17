@@ -48,18 +48,31 @@ int klog_write(int file, char *ptr, int len)
 
 void hard_fault_handler(void)
 {
-    /*
-    volatile uint32_t hfsr = GET_REG(SYSREG_HFSR);
-    volatile uint32_t bfsr = GET_REG(SYSREG_BFSR);
-    volatile uint32_t bfar = GET_REG(SYSREG_BFAR);
-    volatile uint32_t afsr = GET_REG(SYSREG_AFSR);
-    */
+    volatile uint32_t hfsr = SCB_HFSR;
+    //volatile uint32_t bfsr = SCB_BFSR;
+    volatile uint32_t afsr = SCB_AFSR;
+    volatile uint32_t bfar = SCB_BFAR;
+    //volatile uint32_t ufsr = SCB_UFSR;
+    volatile uint32_t mmfar = SCB_MMFAR;
     while(1);
 }
 
 void mem_manage_handler(void)
 {
-    while(1);
+#   define ARM_CFSR (*(volatile uint32_t *)(0xE000ED28))
+#   define ARM_MMFAR (*(volatile uint32_t *)(0xE000ED34))
+    volatile uint32_t address = 0xFFFFFFFF;
+    volatile uint32_t instruction = 0xFFFFFFFF;
+    uint32_t *top_stack;
+
+    if ((ARM_CFSR & 0x80)!= 0) {
+        address = ARM_MMFAR;
+        asm volatile ("mrs %0, psp" : "=r" (top_stack));
+        instruction = *(top_stack - 1);
+    }
+
+    if (task_segfault(address, instruction, MEMFAULT_ACCESS) < 0)
+        while(1);
 }
 
 void bus_fault_handler(void)
@@ -93,6 +106,7 @@ void frosted_init(void)
     ktimer_init();
 
     hw_init();
+    mpu_init();
             
     syscalls_init();
 
@@ -101,7 +115,10 @@ void frosted_init(void)
     sysfs_init();
 
     vfs_mount(NULL, "/mem", "memfs", 0, NULL);
+
+    /* TODO: pass binary blob as source */
     vfs_mount(NULL, "/bin", "xipfs", 0, NULL);
+
     vfs_mount(NULL, "/sys", "sysfs", 0, NULL);
 
     kernel_task_init();

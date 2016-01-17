@@ -16,6 +16,9 @@
 #define TASK_ZOMBIE     0x66
 #define TASK_OVER       0xFF
 
+#define MEMFAULT_ACCESS 0x00
+#define MEMFAULT_DOUBLEFREE 0x01
+
 //#define DEBUG
 
 #include <stdlib.h>
@@ -80,6 +83,7 @@ int task_filedesc_add(struct fnode *f);
 int task_fd_setmask(int fd, uint32_t mask);
 uint32_t task_fd_getmask(int fd);
 struct fnode *task_filedesc_get(int fd);
+int task_segfault(uint32_t addr, uint32_t instr, int flags);
 
 int task_fd_readable(int fd);
 int task_fd_writable(int fd);
@@ -116,6 +120,9 @@ int unregister_module(struct module *m);
 struct module *module_search(char *name);
 
 /* System */
+void mpu_init(void);
+void mpu_task_on(void *stack);
+
 int sys_register_handler(uint32_t n, int (*_sys_c)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t));
 int syscall(uint32_t syscall_nr, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5);
 void syscalls_init(void);
@@ -235,6 +242,8 @@ void kernel_task_init(void);
 #define krealloc(x,y) f_realloc(MEM_KERNEL,x,y)
 #define kfree  f_free
 #define task_space_free f_free
+#define F_MALLOC_OVERHEAD 20
+uint32_t mem_stats_frag(int pool);
 
 #endif /* BSP_INCLUDED_H */
 

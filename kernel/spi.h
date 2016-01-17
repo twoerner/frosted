@@ -1,8 +1,6 @@
 #ifndef INC_SPI
 #define INC_SPI
 
-#define MAX_SPI_PINS 3
-
 struct spi_addr {
     uint32_t base;
     uint32_t irq;
@@ -17,10 +15,22 @@ struct spi_addr {
     uint16_t dff_16;
     uint8_t enable_software_slave_management;
     uint8_t send_msb_first;
+
     const char * name;
+
+    uint32_t dma_base;
+    uint32_t dma_rcc;
+    uint32_t tx_dma_stream;
+    uint32_t rx_dma_stream;
+    uint32_t rx_dma_irq;
 };
+
+typedef void (* spi_completion)(void * arg);
 
 
 void spi_init(struct fnode *dev, const struct spi_addr spi_addrs[], int num_spi);
+
+int devspi_xfer(struct fnode *fno, spi_completion completion_fn, void * completion_arg, const char *obuf, char *ibuf, unsigned int len);
+
 
 #endif
