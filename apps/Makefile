@@ -12,7 +12,7 @@ PREFIX:=$(PWD)/build
 APPS-y += init_bflt.o fresh.o binutils.o stubs.o
 
 # TOOLCHAIN CONFIG
-CROSS_COMPILE?=arm-none-eabi-
+CROSS_COMPILE?=arm-frosted-eabi-
 CC:=$(CROSS_COMPILE)gcc
 AS:=$(CROSS_COMPILE)as
 AR:=$(CROSS_COMPILE)ar
@@ -30,30 +30,23 @@ CFLAGS+=-fPIC -mlong-calls -fno-common -msingle-pic-base -mno-pic-data-is-text-r
 CFLAGS+=-ggdb
 
 # LINKER FLAGS
-LDFLAGS:=-L$(FROSTED_PATH)/build/lib -L$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib -gc-sections --specs=nano.specs
+#LDFLAGS:=-L$(FROSTED_PATH)/build/lib -L$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib -gc-sections
+LDFLAGS:=-L$(FROSTED_PATH)/build/lib 
+#--specs=nano.specs
 LDFLAGS+=-fPIC -mlong-calls -fno-common -Wl,-elf2flt
 
 all: apps
 
-apps: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
-	$(CC) -o $@  $(APPS-y) \
-		-Wl,--start-group \
-		-lfrosted \
-		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libc.a \
-		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libg.a \
-		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libm.a \
-		-Wl,--end-group \
-		-Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 
-apps_newlib: $(APPS-y)
-	$(CC) -o apps  $(APPS-y) \
-		-Wl,--start-group \
-		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libc.a \
-		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libg.a \
-		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libgloss.a \
-		$(FROSTED_PATH)/newlib/build/lib/arm-frosted/lib/libm.a \
-		-Wl,--end-group \
-		-Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
+apps: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
+	$(CC) -o $@  $(APPS-y) -Wl,-Map,apps.map -lc -lm -lg -lgloss -Telf2flt.ld $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS) -Wl,--build-id=none
+
+#apps: $(FROSTED_PATH)/build/lib/libfrosted.a $(APPS-y)
+#	$(CC) -o $@  $(APPS-y) -Telf2flt.ld -lfrosted \
+#		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libc.a \
+#		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libg.a \
+#		$(FROSTED_PATH)/newlib/build/lib/arm-none-eabi/lib/libm.a \
+#		-lfrosted -Wl,-Map,apps.map  $(LDFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
 
 clean:
 	@rm -f *.o

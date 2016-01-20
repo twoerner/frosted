@@ -51,7 +51,7 @@ void task2(void *arg)
 
     close(fdn);
     close(fdz);
-    now = gettimeofday(NULL);
+    now = NULL; //XXX gettimeofday(NULL);
     pid = getpid();
     ppid = getppid();
     free(addr);
@@ -136,6 +136,7 @@ void idling(void *arg)
     }
 }
 
+
 void main(void *arg)
 {
     volatile int i = (int)arg;
@@ -174,3 +175,8 @@ void main(void *arg)
     (void)i;
 }
 
+
+void _start()
+{
+    main("aaah");
+}
