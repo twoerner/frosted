@@ -497,12 +497,13 @@ static int catch_signal(volatile struct task *t, int signo, sigset_t orig_mask)
     if ((t->tb.state == TASK_ZOMBIE) || (t->tb.state == TASK_OVER))
         return -ESRCH;
 
-    if (((1 << signo) & t->tb.sigmask) && (h->hdlr != SIG_IGN))
-    {
-        /* Signal is blocked via t->tb.sigmask */
-        t->tb.sigpend |= (1 << signo);
-        return 0;
-    }
+    /* kill does not work on STM32 idling task */
+    //if (((1 << signo) & t->tb.sigmask) && (h->hdlr != SIG_IGN))
+    //{
+    //    /* Signal is blocked via t->tb.sigmask */
+    //    t->tb.sigpend |= (1 << signo);
+    //    return 0;
+    //}
 
     /* Reset signal, if pending, as it's going to be handled. */
     t->tb.sigpend &= ~(1 << signo);
