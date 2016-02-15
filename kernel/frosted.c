@@ -23,6 +23,7 @@
 #include "libopencm3/cm3/systick.h"
 #include "bflt.h"
 #include "null.h"
+#include "vfs.h"
 
 #ifdef CONFIG_PICOTCP
 # include "pico_stack.h"
@@ -169,17 +170,24 @@ void frosted_kernel(int xipfs_mounted)
         }
 
         if (fno->owner && fno->owner->ops.exe) {
-            void *start = NULL;
+            struct vfs_exec *exec = NULL;
             uint32_t pic;
 
-            start = fno->owner->ops.exe(fno, (void *)init_args, &pic);
-            task_create(start, (void *)init_args, 2, pic);
+            exec = fno->owner->ops.exe(fno, (void *)init_args, &pic);
+            task_create(exec, (void *)init_args, 2, pic);
         }
     } else {
         /* Create "init" task */
+        struct vfs_exec *exec = f_malloc(MEM_KERNEL, sizeof(struct vfs_exec));
         kprintf("Starting Init task\r\n");
-        if (task_create(init, (void *)0, 2, 0) < 0)
-            IDLE();
+        if (exec)
+        {
+            exec->init = init;
+            exec->allocated = NULL;
+            exec->type = VFS_BIN;
+            if (task_create(exec, (void *)0, 2, 0) < 0)
+                IDLE();
+        }
     }
 
     ktimer_add(1000, ktimer_tcpip, NULL);

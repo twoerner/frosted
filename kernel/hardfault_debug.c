@@ -8,6 +8,23 @@
 void HardFault_HandlerC(unsigned long *hardfault_args);
 
 // Use the 'naked' attribute so that C stacking is not used.
+//__attribute__((naked))
+//void usage_fault_handler(void)
+//{
+//    /*
+//     * Get the appropriate stack pointer, depending on our mode,
+//     * and use it as the parameter to the C handler. This function
+//     * will never return
+//     */
+//    __asm("TST LR, #4           \n"
+//          "ITE EQ               \n"
+//          "MRSEQ R0, MSP        \n"
+//          "MRSNE R0, PSP        \n"
+//          "B HardFault_HandlerC \n"
+//           );
+//}
+
+// Use the 'naked' attribute so that C stacking is not used.
 __attribute__((naked))
 void HardFault_Handler(void)
 {

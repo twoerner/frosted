@@ -22,6 +22,7 @@
 #include "string.h" /* flibc string.h */
 #include "signal.h"
 #include "sys/wait.h"
+#include "vfs.h"
 
 
 /* Full kernel space separation */
@@ -190,7 +191,7 @@ struct __attribute__((packed)) task_block {
     void *sp;
     void *cur_stack;
     struct task *next;
-    void *allocated; /* to be freed when task dies */
+    struct vfs_exec *exec;
 };
 
 struct __attribute__((packed)) task {
@@ -276,10 +277,15 @@ static void task_destroy(struct task *t)
             i++;
         }
     }
-    if (t->tb.allocated) /* free allocated mem, e.g. by bflt_load */
+    kprintf("Destroy %p\n", t->tb);
+    if (t->tb.exec)
     {
-        kprintf("Freeing %p\n", t->tb.allocated);
-        f_free(t->tb.allocated);
+        if (t->tb.exec->allocated)  /* VFS might have allocated memory, e.g. bFLT */
+        {
+            kprintf("Freeing %p\n", t->tb.exec->allocated);
+            f_free(t->tb.exec->allocated);
+        }
+        f_free(t->tb.exec);
     }
     f_free(t->tb.arg);
     task_space_free(t);
@@ -787,7 +793,7 @@ static void task_create_real(volatile struct task *new, void (*init)(void *), vo
     new->tb.timeslice = TIMESLICE(new);
     new->tb.state = TASK_RUNNABLE;
     new->tb.sighdlr = NULL;
-    new->tb.allocated = NULL;
+    new->tb.exec = NULL;
 
     if ((new->tb.flags & TASK_FLAG_VFORK) != 0) {
         struct task *pt = tasklist_get(&tasks_idling, new->tb.ppid);
@@ -819,7 +825,7 @@ static void task_create_real(volatile struct task *new, void (*init)(void *), vo
     new->tb.sp = (uint32_t *)sp;
 } 
 
-int task_create(void (*init)(void *), void *arg, unsigned int prio, uint32_t pic)
+int task_create(struct vfs_exec *exec, void *arg, unsigned int prio, uint32_t pic)
 {
     struct task *new;
     int i;
@@ -850,28 +856,19 @@ int task_create(void (*init)(void *), void *arg, unsigned int prio, uint32_t pic
     tasklist_add(&tasks_running, new);
 
     number_of_tasks++;
-    task_create_real(new, init, arg, prio, pic);
+    task_create_real(new, exec->init, arg, prio, pic);
+    new->tb.exec = exec;
     new->tb.state = TASK_RUNNABLE;
     irq_on();
     return new->tb.pid;
 }
 
-int task_set_allocated(int pid, void *allocated)
-{
-    struct task *t = tasklist_get(&tasks_running, pid);
-    if (!t)
-        t = tasklist_get(&tasks_idling, pid);
-    if (!t)
-        return -1;
-
-    t->tb.allocated = allocated;
-    return 0;
-}
-
-int scheduler_exec(void (*init)(void *), void *args, uint32_t pic)
+int scheduler_exec(struct vfs_exec *exec, void *args, uint32_t pic)
 {
     volatile struct task *t = _cur_task;
-    task_create_real(t, init, (void *)args, t->tb.prio, pic);
+    task_create_real(t, exec->init, (void *)args, t->tb.prio, pic);
+    t->tb.exec = exec;
+
     //asm volatile ("msr "PSP", %0" :: "r" (_cur_task->tb.sp + EXTRA_FRAME_SIZE));
     asm volatile ("msr "PSP", %0" :: "r" (_cur_task->tb.sp));
     _cur_task->tb.state = TASK_RUNNING;

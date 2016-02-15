@@ -19,6 +19,7 @@
  */  
 #include "frosted.h"
 #include "string.h"
+#include "vfs.h"
 #include "sys/stat.h"
 
 #define O_MODE(o) ((o & O_ACCMODE))
@@ -417,14 +418,15 @@ int sys_exec_hdlr(uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, ui
     char *path = (char *)arg1;
     char *arg = (char *)arg2;
     struct fnode *f;
-    f = fno_search(path);
-    void (*start)(void *arg) = NULL;
+    struct vfs_exec *exec = { 0 };
     uint32_t pic;
 
+    f = fno_search(path);
+
     if (f && f->owner && (f->flags & FL_EXEC) && f->owner->ops.exe) {
-        start = f->owner->ops.exe(f, arg, &pic);
-        if (start) 
-            scheduler_exec(start, arg, pic);
+        exec = f->owner->ops.exe(f, arg, &pic);
+        if (exec) 
+            scheduler_exec(exec, arg, pic);
     }
     return -EINVAL;
 }

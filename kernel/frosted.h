@@ -7,6 +7,7 @@
 #include "interrupts.h"
 #include "string.h"
 #include "errno.h"
+#include "vfs.h"
 
 #define TASK_IDLE       0
 #define TASK_RUNNABLE   1
@@ -79,7 +80,7 @@ int task_fd_writable(int fd);
 int task_filedesc_del(int fd);
 void task_suspend(void);
 void task_resume(int pid);
-int task_create(void (*init)(void *), void *arg, unsigned int prio, uint32_t pic);
+int task_create(struct vfs_exec *exec, void *arg, unsigned int prio, uint32_t pic);
 struct fnode *task_getcwd(void);
 void task_chdir(struct fnode *f);
 
@@ -196,7 +197,7 @@ struct module {
         int (*seek)(struct fnode *fno, int offset, int whence);
         int (*creat)(struct fnode *fno);
         int (*unlink)(struct fnode *fno);
-        void * (*exe)(struct fnode *fno, void *arg, uint32_t *pic);
+        struct vfs_exec *(*exe)(struct fnode *fno, void *arg, uint32_t *pic);
 
         /* Sockets only (NULL == file) */
         int (*socket)(int domain, int type, int protocol);
