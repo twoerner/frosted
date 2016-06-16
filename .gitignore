@@ -44,7 +44,19 @@ kconfig/.config
 kconfig/.config.old
 
 #generated files
+kconfig/.depend
 apps/apps.ld
 .gdbinit
 *.ld
 libfrosted/syscall_table.c
+apps
+apps.img
+kernel.img
+kernel/syscall_table.c
+syscall_table.[ch]
+tools/xipfstool
+
+# project directories
+frosted-userland
+kernel/libopencm3
+kernel/net/picotcp
